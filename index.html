@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Solucionador de Programación Lineal con Método Simplex paso a paso, método gráfico y análisis de sensibilidad.">
+  <title>Solver PL — Método Simplex</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">PL</div>
+        <div>
+          <div class="logo-text">Solver PL</div>
+          <div class="logo-sub">Método Simplex Paso a Paso</div>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-section="input" id="tab-input">📝 Entrada</button>
+        <button class="nav-tab" data-section="solution" id="tab-solution">📊 Solución</button>
+        <button class="nav-tab" data-section="graph" id="tab-graph">📈 Gráfico</button>
+        <button class="nav-tab" data-section="sensitivity" id="tab-sensitivity">🔍 Sensibilidad</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- ===== SECCIÓN: ENTRADA ===== -->
+    <div id="section-input" class="section active">
+      <div class="card">
+        <div class="card-title"><div class="icon">⚙️</div> Configuración del Problema</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Optimización</label>
+            <select id="opt-type" class="type-select">
+              <option value="max">Maximizar (Max)</option>
+              <option value="min">Minimizar (Min)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Variables de Decisión</label>
+            <input type="number" id="num-vars" min="2" max="10" value="2">
+          </div>
+          <div class="form-group">
+            <label>Restricciones</label>
+            <input type="number" id="num-constraints" min="1" max="20" value="3">
+          </div>
+          <div class="form-group" style="align-self:end;">
+            <button class="btn btn-secondary" id="btn-generate" onclick="generateForm()">🔄 Generar Formulario</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="icon">📐</div> Función Objetivo</div>
+        <div id="objective-container">
+          <!-- Generado dinámicamente -->
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon">📏</div> Restricciones
+        </div>
+        <div id="constraints-container">
+          <!-- Generado dinámicamente -->
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:1rem;">
+        <button class="btn btn-solve" id="btn-solve" onclick="solveProblem()">
+          🚀 Resolver Problema
+        </button>
+      </div>
+
+      <!-- Ejemplo rápido -->
+      <div class="card" style="margin-top:2rem;">
+        <div class="card-title"><div class="icon">💡</div> Ejemplos Rápidos</div>
+        <div class="form-row" style="flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="loadExample(1)">📄 Ejemplo 1 — Word Light</button>
+          <button class="btn btn-secondary" onclick="loadExample(2)">📄 Ejemplo 2 — Producción</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: SOLUCIÓN ===== -->
+    <div id="section-solution" class="section">
+      <div id="solution-content">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          <p>Ingresa un problema de PL y presiona "Resolver" para ver la solución paso a paso.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: GRÁFICO ===== -->
+    <div id="section-graph" class="section">
+      <div id="graph-content">
+        <div class="empty-state">
+          <div class="empty-icon">📈</div>
+          <p>El método gráfico se mostrará automáticamente para problemas con 2 variables de decisión.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: SENSIBILIDAD ===== -->
+    <div id="section-sensitivity" class="section">
+      <div id="sensitivity-content">
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <p>El análisis de sensibilidad se mostrará después de resolver un problema.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="simplex.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

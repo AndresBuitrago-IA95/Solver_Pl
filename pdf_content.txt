@@ -1,0 +1,600 @@
+- El Método Simplex Algebraico -
+
+---PAGE---
+Ejemplo 
+La compañía Word Light produce dos dispositivos para las lámparas
+(productos 1 y 2) que requieren partes de metal y componentes
+eléctricas. La administración desea determinar cuántas unidades de cada
+producto fabricar para maximizar la ganancia. Por cada unidad del
+producto 1 se requieren 1 unidad de partes de metal y 2 unidades de
+componentes eléctricas, por cada unidad del producto 2 se requieren 3
+unidades de partes de metal y 2 unidades de componentes eléctricas, la
+compañía tiene 200 unidades de partes de metal y 300 de componentes
+eléctricas, cada unidad del producto 1 da una ganancia de $ 1 y cada
+unidad de producto 2, hasta 60 unidades da una ganancia de $ 2,
+cualquier exceso de 60 unidades no tiene ganancia por lo que fabricar
+más de 60 está fuera de consideración.
+a) Formule el modelo de programación lineal.
+b) Resolver el problema mediante el método simplex
+
+---PAGE---
+Formulamos el problema…
+SOLUCION AL PROBLEMA:
+Producto 1 = X1
+;     Producto 2 = X2
+Max Z = X1 + 2X2
+Sujeto a:
+X1 + 3X2
+≤ 200
+2X1 + 2X2≤ 300 
+X2 ≤ 60
+X1, X2 ≥ 0
+Metal
+Eléctrico
+Ganancia
+X1
+1
+2
+1
+X2
+3
+2
+2
+300
+200
+X1 +3X2
+
+---PAGE---
+Reescribimos formulación
+Max 
+Z = X1 + 2X2
+Sujeto a:
+X1 + 3X2≤ 200
+2X1 + 2X2≤ 300 
+X2 ≤ 60
+X1, X2 ≥ 0
+Max 
+Z - X1 - 2X2 = 0
+X1 + 3X2 + S1
+= 200
+2X1 + 2X2             + S2                = 300                 
+.
+.    X2
++ S3       = 60
+X1, X2 , S1 , S2 , S3
+≥ 0
+Recordemos que la función objetivo se iguala 
+a cero (0) y la regla de restricción del tipo ≤ !!
+
+---PAGE---
+Construimos el “tablero” simplex…
+Max 
+Z - X1 - 2X2 = 0
+X1 + 3X2 + S1
+= 200
+2X1 + 2X2             + S2                = 300                  
+.
+X2
++ S3       = 60
+X1, X2 , S1 , S2 , S3
+≥ 0
+Iteracion = 0
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+-1
+-2
+0
+0
+0
+0
+0
+(1)
+S1
+0
+1
+3
+1
+0
+0
+200
+66.6
+(2)
+S2
+0
+2
+2
+0
+1
+0
+300
+150
+(3)
+S3
+0
+0
+1
+0
+0
+1
+60
+60
+Variable que 
+entra
+Columna 
+pivote
+Mínimo
+Número 
+pivote
+Variable 
+que sale
+Renglón pivote
+
+---PAGE---
+Ahora…
+Iteracion = 1
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+-1
+0
+0
+0
+2
+120
+(1)
+S1
+0
+1
+0
+1
+0
+-3
+20
+(2)
+S2
+0
+2
+0
+0
+1
+-2
+180
+(3)
+S3
+0
+0
+1
+0
+0
+1
+60
+El número pivote se debe volver 1 (casualmente ya lo es!), y los 
+demás elementos de la columna pivote se deben volver 0 
+mediante operaciones de renglón!
+(0) = (0)+2(3)    ; (1) = (1)-3(3);   (2)=(2)-2(3)
+
+---PAGE---
+Prueba de optimalidad y seguimos..
+Iteracion = 1
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+-1
+0
+0
+0
+2
+120
+-
+(1)
+S1
+0
+1
+0
+1
+0
+-3
+20
+20
+(2)
+S2
+0
+2
+0
+0
+1
+-2
+180
+90
+(3)
+S3
+0
+0
+1
+0
+0
+1
+60
+-
+
+---PAGE---
+Ahora…
+Iteracion = 2
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+0
+0
+1
+0
+-1
+140
+(1)
+S1
+0
+1
+0
+1
+0
+-3
+20
+(2)
+S2
+0
+0
+0
+-2
+1
+4
+140
+(3)
+S3
+0
+0
+1
+0
+0
+1
+60
+El número pivote se debe volver 1 (casualmente ya lo es!), y los 
+demás elementos de la columna pivote se deben volver 0 
+mediante operaciones de renglón!
+(0) = (0)+(1)    ; (2) = (2)-2(1)
+
+---PAGE---
+Prueba de optimalidad y…
+Iteracion = 2
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+0
+0
+1
+0
+-1
+140
+(1)
+S1
+0
+1
+0
+1
+0
+-3
+20
+(2)
+S2
+0
+0
+0
+-2
+1
+4
+140
+(3)
+S3
+0
+0
+1
+0
+0
+1
+60
+No hay números negativos en el renglón (0) !! Terminamos!!
+Entonces
+X1 = 20 ; X2 = 60 por lo que Z= 140
+En el problema, esto que significa?
+
+---PAGE---
+Ejercicio
+
+---PAGE---
+Reescribimos formulación
+Max 
+Z = 60X1 + 30X2
+Sujeto a:
+X1 ≤ 5
+X2≤ 4 
+6X1 + 8X2 ≤ 48
+X1, X2 ≥ 0
+Max 
+Z - 60X1 - 30X2
+= 0
+X1 +            S1
+= 5
+X2             + S2                    = 4                       
+6X1 +  8X2
++ S3     = 48
+X1, X2 , S1 , S2 , S3
+≥ 0
+Recordemos que la función objetivo se iguala 
+a cero (0) y la regla de restricción del tipo ≤ !!
+
+---PAGE---
+Construimos el “tablero” simplex…
+Iteracion = 0
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+-60
+-30
+0
+0
+0
+0
+-
+(1)
+S1
+0
+1
+0
+1
+0
+0
+5
+5
+(2)
+S2
+0
+0
+1
+0
+1
+0
+4
+-
+(3)
+S3
+0
+6
+8
+0
+0
+1
+48
+8
+Max 
+Z - 60X1 - 30X2
+= 0
+X1 +            S1
+= 5
+X2             + S2                        = 4                                   .    
+6X1 +  8X2
++ S3      = 48
+X1, X2 , S1 , S2 , S3
+≥ 0
+(0)=(0)+60(1) ; (3)=(3)-6(1)  
+
+---PAGE---
+Construimos el “tablero” simplex…
+Iteracion = 1
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+0
+-30
+60
+0
+0
+300
+-
+(1)
+S1
+0
+1
+0
+1
+0
+0
+5
+-
+(2)
+S2
+0
+0
+1
+0
+1
+0
+4
+4
+(3)
+S3
+0
+0
+8
+-6
+0
+1
+18
+9/4
+Max 
+Z - 60X1 - 30X2
+= 0
+X1 +            S1
+= 5
+X2             + S2                        = 4                                   .    
+6X1 +  8X2
++ S3      = 48
+X1, X2 , S1 , S2 , S3
+≥ 0
+
+---PAGE---
+Construimos el “tablero” simplex…
+Iteracion = 1
+Ec
+#
+VB
+Coeficientes
+Lado 
+derecho
+Razón
+Z
+X1
+X2
+S1
+S2
+S3
+(0)
+Z
+1
+0
+0
+75/2
+0
+15/4
+735/2
+-
+(1)
+S1
+0
+1
+0
+1
+0
+0
+5
+-
+(2)
+S2
+0
+0
+0
+3/4
+1
+-1/8
+7/4
+(3)
+S3
+0
+0
+1
+-3/4
+0
+1/8
+9/4
+Max 
+Z - 60X1 - 30X2
+= 0
+X1 +            S1
+= 5
+X2             + S2                        = 4                                   .    
+6X1 +  8X2
++ S3      = 48
+X1, X2 , S1 , S2 , S3
+≥ 0
+
+---PAGE---
+Ejercicio propuesto!!…
