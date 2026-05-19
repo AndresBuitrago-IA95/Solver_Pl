@@ -118,6 +118,37 @@ function solveProblem() {
   }
 }
 
+// --- Generar badge de método ---
+function renderMethodBadge(result) {
+  if (!result.metadata) return '';
+  let html = '';
+  if (result.metadata.useBigM) {
+    html += '<span class="method-badge bigm">🔧 Método Big-M</span> ';
+  } else {
+    html += '<span class="method-badge standard">✅ Simplex Estándar</span> ';
+  }
+  if (result.metadata.isDegenerado) {
+    html += '<span class="method-badge degenerate">⚠️ Degeneración Detectada</span>';
+  }
+  return html;
+}
+
+// --- Renderizar metadata de solución ---
+function renderSolutionMeta(result) {
+  if (!result.metadata) return '';
+  return `<div class="solution-meta">
+    <div class="solution-meta-item">
+      <span class="meta-label">Método</span>
+      <span class="meta-value">${result.metadata.method}</span>
+    </div>
+    <div class="solution-meta-item">
+      <span class="meta-label">Iteraciones</span>
+      <span class="meta-value">${result.metadata.numIterations}</span>
+    </div>
+    ${result.metadata.isDegenerado ? '<div class="solution-meta-item"><span class="meta-label">Estado</span><span class="meta-value" style="color:#f59e0b;">Degenerado</span></div>' : ''}
+  </div>`;
+}
+
 // --- Renderizar solución completa ---
 function renderSolution(config, result) {
   const ct = document.getElementById('solution-content');
@@ -125,6 +156,7 @@ function renderSolution(config, result) {
   html += renderFormulation(config);
   html += renderAugmentedForm(result);
   html += '<div class="card"><div class="card-title"><div class="icon">📊</div> Tableros Simplex — Paso a Paso</div>';
+  html += '<div style="margin-bottom:1rem;">' + renderMethodBadge(result) + '</div>';
   for (let idx = 0; idx < result.iterations.length; idx++) {
     const iter = result.iterations[idx];
     const isLast = idx === result.iterations.length - 1;
@@ -279,8 +311,12 @@ function renderTableau(iter, isLast, status) {
   // Render a single row
   function mkRow(tRowIdx, eqLabel, vbLabel, isZRow) {
     const isPR = (pr === tRowIdx && !isLast);
+    // Detectar degeneración: RHS = 0 para variable básica
+    const rhsVal = iter.tableau[tRowIdx][iter.tableau[tRowIdx].length - 1];
+    const isDegen = !isZRow && rhsVal.isZero();
     let cls = isZRow ? 'row-z' : '';
     if (isPR) cls += (cls ? ' ' : '') + 'pivot-row';
+    if (isDegen) cls += (cls ? ' ' : '') + 'degenerate-row';
     let r = `<tr${cls ? ` class="${cls}"` : ''}>`;
     r += `<td class="col-eq">${eqLabel}</td><td class="col-vb">${vbLabel}</td>`;
 
@@ -345,6 +381,7 @@ function renderFinalSolution(config, result) {
   let html = `<div class="card solution-card">
     <div class="card-title"><div class="icon">🏆</div> Solución ${result.status === 'multiple' ? '(Múltiples Óptimos)' : 'Óptima'}</div>
     <div class="solution-value">Z = ${result.solution.z.toString()} (${result.solution.z.toDecimal().toFixed(4).replace(/\.?0+$/, '')})</div>
+    ${renderSolutionMeta(result)}
     <div class="solution-vars">`;
   for (let j = 0; j < config.numVars; j++) {
     const vn = `X${j + 1}`;
@@ -363,47 +400,79 @@ function renderFinalSolution(config, result) {
 
 // --- Ejemplos rápidos ---
 function loadExample(num) {
-  if (num === 1) {
-    document.getElementById('opt-type').value = 'max';
-    document.getElementById('num-vars').value = '2';
-    document.getElementById('num-constraints').value = '3';
-    generateForm();
-    setTimeout(() => {
-      document.getElementById('obj-c0').value = '1';
-      document.getElementById('obj-c1').value = '2';
-      document.getElementById('cons-0-c0').value = '1';
-      document.getElementById('cons-0-c1').value = '3';
-      document.getElementById('cons-0-type').value = '<=';
-      document.getElementById('cons-0-rhs').value = '200';
-      document.getElementById('cons-1-c0').value = '2';
-      document.getElementById('cons-1-c1').value = '2';
-      document.getElementById('cons-1-type').value = '<=';
-      document.getElementById('cons-1-rhs').value = '300';
-      document.getElementById('cons-2-c0').value = '0';
-      document.getElementById('cons-2-c1').value = '1';
-      document.getElementById('cons-2-type').value = '<=';
-      document.getElementById('cons-2-rhs').value = '60';
-    }, 50);
-  } else if (num === 2) {
-    document.getElementById('opt-type').value = 'max';
-    document.getElementById('num-vars').value = '2';
-    document.getElementById('num-constraints').value = '3';
-    generateForm();
-    setTimeout(() => {
-      document.getElementById('obj-c0').value = '60';
-      document.getElementById('obj-c1').value = '30';
-      document.getElementById('cons-0-c0').value = '1';
-      document.getElementById('cons-0-c1').value = '0';
-      document.getElementById('cons-0-type').value = '<=';
-      document.getElementById('cons-0-rhs').value = '5';
-      document.getElementById('cons-1-c0').value = '0';
-      document.getElementById('cons-1-c1').value = '1';
-      document.getElementById('cons-1-type').value = '<=';
-      document.getElementById('cons-1-rhs').value = '4';
-      document.getElementById('cons-2-c0').value = '6';
-      document.getElementById('cons-2-c1').value = '8';
-      document.getElementById('cons-2-type').value = '<=';
-      document.getElementById('cons-2-rhs').value = '48';
-    }, 50);
-  }
+  const examples = {
+    1: { // Word Light — Max estándar con <=
+      type: 'max', vars: 2, constraints: 3,
+      obj: ['1', '2'],
+      cons: [
+        { coeffs: ['1', '3'], type: '<=', rhs: '200' },
+        { coeffs: ['2', '2'], type: '<=', rhs: '300' },
+        { coeffs: ['0', '1'], type: '<=', rhs: '60' }
+      ]
+    },
+    2: { // Producción — Max estándar con <=
+      type: 'max', vars: 2, constraints: 3,
+      obj: ['60', '30'],
+      cons: [
+        { coeffs: ['1', '0'], type: '<=', rhs: '5' },
+        { coeffs: ['0', '1'], type: '<=', rhs: '4' },
+        { coeffs: ['6', '8'], type: '<=', rhs: '48' }
+      ]
+    },
+    3: { // Big-M — Con restricción >=
+      type: 'max', vars: 2, constraints: 3,
+      obj: ['5', '4'],
+      cons: [
+        { coeffs: ['6', '4'], type: '<=', rhs: '24' },
+        { coeffs: ['1', '2'], type: '<=', rhs: '6' },
+        { coeffs: ['1', '1'], type: '>=', rhs: '2' }
+      ]
+    },
+    4: { // Minimización con restricciones mixtas
+      type: 'min', vars: 2, constraints: 3,
+      obj: ['2', '3'],
+      cons: [
+        { coeffs: ['1', '1'], type: '>=', rhs: '4' },
+        { coeffs: ['1', '3'], type: '>=', rhs: '6' },
+        { coeffs: ['1', '0'], type: '<=', rhs: '5' }
+      ]
+    },
+    5: { // Problema infactible
+      type: 'max', vars: 2, constraints: 2,
+      obj: ['1', '1'],
+      cons: [
+        { coeffs: ['1', '1'], type: '<=', rhs: '4' },
+        { coeffs: ['1', '1'], type: '>=', rhs: '6' }
+      ]
+    },
+    6: { // Problema no acotado
+      type: 'max', vars: 2, constraints: 2,
+      obj: ['2', '1'],
+      cons: [
+        { coeffs: ['1', '-1'], type: '<=', rhs: '10' },
+        { coeffs: ['1', '0'], type: '>=', rhs: '0' }
+      ]
+    }
+  };
+
+  const ex = examples[num];
+  if (!ex) return;
+
+  document.getElementById('opt-type').value = ex.type;
+  document.getElementById('num-vars').value = String(ex.vars);
+  document.getElementById('num-constraints').value = String(ex.constraints);
+  generateForm();
+
+  setTimeout(() => {
+    for (let j = 0; j < ex.vars; j++) {
+      document.getElementById(`obj-c${j}`).value = ex.obj[j];
+    }
+    for (let i = 0; i < ex.constraints; i++) {
+      for (let j = 0; j < ex.vars; j++) {
+        document.getElementById(`cons-${i}-c${j}`).value = ex.cons[i].coeffs[j];
+      }
+      document.getElementById(`cons-${i}-type`).value = ex.cons[i].type;
+      document.getElementById(`cons-${i}-rhs`).value = ex.cons[i].rhs;
+    }
+  }, 50);
 }

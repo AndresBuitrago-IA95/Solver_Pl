@@ -1,5 +1,5 @@
-// ============================================================
-// simplex.js — Motor del Método Simplex con aritmética exacta
+﻿// ============================================================
+// simplex.js â€” Motor del MÃ©todo Simplex con aritmÃ©tica exacta
 // ============================================================
 
 // --- Utilidades ---
@@ -10,7 +10,7 @@ function gcd(a, b) {
   return a || 1;
 }
 
-// --- Clase Fraction: aritmética exacta de fracciones ---
+// --- Clase Fraction: aritmÃ©tica exacta de fracciones ---
 class Fraction {
   constructor(num = 0, den = 1) {
     if (den === 0) throw new Error("Denominador cero");
@@ -57,7 +57,7 @@ class Fraction {
   mul(o) { o = Fraction.parse(o); return new Fraction(this.num * o.num, this.den * o.den); }
   div(o) {
     o = Fraction.parse(o);
-    if (o.num === 0) throw new Error("División por cero");
+    if (o.num === 0) throw new Error("DivisiÃ³n por cero");
     return new Fraction(this.num * o.den, this.den * o.num);
   }
   neg() { return new Fraction(-this.num, this.den); }
@@ -79,7 +79,7 @@ class Fraction {
 
   toHTML() {
     if (this.den === 1) return `<span>${this.num}</span>`;
-    const sign = this.num < 0 ? '−' : '';
+    const sign = this.num < 0 ? 'âˆ’' : '';
     const n = Math.abs(this.num);
     return `<span class="frac">${sign}<sup>${n}</sup>&frasl;<sub>${this.den}</sub></span>`;
   }
@@ -100,7 +100,7 @@ class SimplexSolver {
     this.iterations = [];
     this.status = null;       // 'optimal','unbounded','infeasible','multiple'
     this.solution = null;
-    this.M = new Fraction(10000);
+    this.M = new Fraction(100000);
     this.useBigM = false;
   }
 
@@ -108,7 +108,7 @@ class SimplexSolver {
     // Copiar coeficientes objetivo
     this.objCoeffs = this.origObjective.map(c => c.clone());
 
-    // Si es minimización, negamos el objetivo internamente
+    // Si es minimizaciÃ³n, negamos el objetivo internamente
     this.isMin = this.type === 'min';
     if (this.isMin) {
       this.objCoeffs = this.objCoeffs.map(c => c.neg());
@@ -155,7 +155,17 @@ class SimplexSolver {
     }
 
     this._extractSolution();
-    return { status: this.status, solution: this.solution, iterations: this.iterations };
+    return {
+      status: this.status,
+      solution: this.solution,
+      iterations: this.iterations,
+      metadata: {
+        useBigM: this.useBigM,
+        isDegenerado: this._checkDegeneracy(),
+        numIterations: this.iterations.length,
+        method: this.useBigM ? 'Big-M' : 'Simplex EstÃ¡ndar'
+      }
+    };
   }
 
   _buildAugmented() {
@@ -170,7 +180,7 @@ class SimplexSolver {
     this.useBigM = false;
     let sCount = 0, aCount = 0;
 
-    // Determinar variables adicionales por restricción
+    // Determinar variables adicionales por restricciÃ³n
     for (let i = 0; i < m; i++) {
       const ct = this.constraints[i].type;
       if (ct === '<=') {
@@ -257,7 +267,7 @@ class SimplexSolver {
       }
     }
 
-    // Eliminar artificiales de fila 0 (hacer coeficiente 0 en columnas de artificiales básicas)
+    // Eliminar artificiales de fila 0 (hacer coeficiente 0 en columnas de artificiales bÃ¡sicas)
     for (const ai of this.artificialInfo) {
       const rowIdx = ai.row + 1;
       const colIdx = 1 + this.varNames.indexOf(ai.name);
@@ -271,7 +281,7 @@ class SimplexSolver {
   }
 
   _isOptimal() {
-    // Óptimo si no hay coeficientes negativos en fila 0 (cols 1..totalVars)
+    // Ã“ptimo si no hay coeficientes negativos en fila 0 (cols 1..totalVars)
     for (let j = 1; j <= this.totalVars; j++) {
       if (this.tableau[0][j].isNeg()) return false;
     }
@@ -279,19 +289,20 @@ class SimplexSolver {
   }
 
   _findPivotCol() {
-    // Columna con coeficiente más negativo en fila 0
-    let minVal = new Fraction(0);
-    let minCol = -1;
+    // Regla de Bland: seleccionar la PRIMERA variable (menor Ã­ndice)
+    // con coeficiente negativo en fila 0, para evitar ciclado
     for (let j = 1; j <= this.totalVars; j++) {
-      if (this.tableau[0][j].lt(minVal)) {
-        minVal = this.tableau[0][j];
-        minCol = j;
+      if (this.tableau[0][j].isNeg()) {
+        return j;
       }
     }
-    return minCol;
+    return -1;
   }
 
   _findPivotRow(pivotCol) {
+    // Prueba de razÃ³n mÃ­nima con regla de Bland:
+    // En caso de empate, se selecciona la fila con menor Ã­ndice
+    // (el uso de '<' estricto ya garantiza esto al recorrer en orden ascendente)
     const m = this.basicVars.length;
     let minRatio = null;
     let minRow = -1;
@@ -347,13 +358,13 @@ class SimplexSolver {
         }
         const sign = factor.isPos() ? '-' : '+';
         const absFactor = factor.abs();
-        const fStr = absFactor.eq(1) ? '' : absFactor.toString() + '·';
+        const fStr = absFactor.eq(1) ? '' : absFactor.toString() + 'Â·';
         const rowLabel = i === 0 ? '(0)' : `(${i})`;
         ops.push(`${rowLabel} = ${rowLabel} ${sign} ${fStr}(${pivotRow})`);
       }
     }
 
-    // Actualizar variable básica
+    // Actualizar variable bÃ¡sica
     this.basicVars[pivotRow - 1] = enteringVar;
 
     this._recordIteration(iterNum, {
@@ -363,41 +374,43 @@ class SimplexSolver {
   }
 
   _recordIteration(iterNum, pivotInfo = null) {
-    const m = this.basicVars.length;
-    const ratios = pivotInfo ? null : (() => {
-      const pc = this._findPivotCol();
-      return pc !== -1 ? this._computeRatios(pc) : null;
-    })();
-    const pc = pivotInfo ? pivotInfo.pivotCol : this._findPivotCol();
-    const pr = pivotInfo ? pivotInfo.pivotRow : (pc !== -1 ? this._findPivotRow(pc) : -1);
+    const optimal = this._isOptimal();
+
+    // After a pivot, compute next pivot info and ratios for display
+    let nextPivotCol = null, nextPivotRow = null, nextRatios = null, nextEntering = null, nextLeaving = null;
+    if (!optimal) {
+      nextPivotCol = this._findPivotCol();
+      if (nextPivotCol !== -1) {
+        nextRatios = this._computeRatios(nextPivotCol);
+        nextPivotRow = this._findPivotRow(nextPivotCol);
+        nextEntering = this.varNames[nextPivotCol - 1];
+        if (nextPivotRow !== -1) {
+          nextLeaving = this.basicVars[nextPivotRow - 1];
+        }
+      }
+    }
 
     const snapshot = {
       iteration: iterNum,
       varNames: [...this.varNames],
       basicVars: [...this.basicVars],
       tableau: this.tableau.map(row => row.map(v => v.clone())),
-      pivotCol: (!pivotInfo && pc !== -1) ? pc : (pivotInfo ? pivotInfo.pivotCol : null),
-      pivotRow: (!pivotInfo && pr !== -1) ? pr : (pivotInfo ? pivotInfo.pivotRow : null),
-      pivotElement: pivotInfo ? pivotInfo.pivotElement : null,
-      enteringVar: pivotInfo ? pivotInfo.enteringVar : (pc !== -1 ? this.varNames[pc - 1] : null),
-      leavingVar: pivotInfo ? pivotInfo.leavingVar : null,
+      // Para visualizaciÃ³n: muestra la info del SIGUIENTE pivote
+      pivotCol: nextPivotCol,
+      pivotRow: nextPivotRow,
+      pivotElement: (nextPivotRow !== null && nextPivotCol !== null && nextPivotRow !== -1)
+        ? this.tableau[nextPivotRow][nextPivotCol].clone() : null,
+      enteringVar: nextEntering,
+      leavingVar: nextLeaving,
+      ratios: nextRatios,
+      // Operaciones realizadas para llegar a este tablero (iteraciÃ³n anterior)
       operations: pivotInfo ? pivotInfo.operations : null,
-      ratios: ratios || (pc !== -1 && !pivotInfo ? this._computeRatios(pc) : null),
-      isOptimal: pivotInfo ? false : this._isOptimal()
+      prevEntering: pivotInfo ? pivotInfo.enteringVar : null,
+      prevLeaving: pivotInfo ? pivotInfo.leavingVar : null,
+      isOptimal: optimal,
+      // DetecciÃ³n de degeneraciÃ³n: alguna variable bÃ¡sica tiene RHS = 0
+      isDegenerado: this._checkDegeneracy()
     };
-
-    // Para iteración 0: calcular ratios y pivot info
-    if (iterNum === 0 && !pivotInfo) {
-      if (pc !== -1) {
-        snapshot.enteringVar = this.varNames[pc - 1];
-        snapshot.pivotCol = pc;
-        if (pr !== -1) {
-          snapshot.pivotRow = pr;
-          snapshot.pivotElement = this.tableau[pr][pc].clone();
-          snapshot.leavingVar = this.basicVars[pr - 1];
-        }
-      }
-    }
 
     this.iterations.push(snapshot);
   }
@@ -412,8 +425,17 @@ class SimplexSolver {
     return false;
   }
 
+  // DetecciÃ³n de degeneraciÃ³n: retorna true si alguna variable bÃ¡sica tiene RHS = 0
+  _checkDegeneracy() {
+    const m = this.basicVars.length;
+    for (let i = 0; i < m; i++) {
+      if (this.tableau[i + 1][this.rhsCol].isZero()) return true;
+    }
+    return false;
+  }
+
   _checkMultipleOptimal() {
-    // Si alguna variable no básica tiene coeficiente 0 en fila Z
+    // Si alguna variable no bÃ¡sica tiene coeficiente 0 en fila Z
     for (let j = 1; j <= this.totalVars; j++) {
       const vName = this.varNames[j - 1];
       if (!this.basicVars.includes(vName) && this.tableau[0][j].isZero() && !vName.startsWith('A')) {
@@ -448,39 +470,293 @@ class SimplexSolver {
     this.solution = { z: zVal, variables };
   }
 
-  // Obtener el tablero óptimo final para análisis de sensibilidad
+  // Obtener el tablero Ã³ptimo final para anÃ¡lisis de sensibilidad
   getOptimalTableau() {
     if (this.iterations.length === 0) return null;
     return this.iterations[this.iterations.length - 1];
   }
 }
+// ============================================================
+// test.js â€” Suite de Pruebas para SimplexSolver
+// Ejecutar con: node _test_combined.js
+// ============================================================
 
-const s = new SimplexSolver({
-  type:'max', numVars:2, objective:['1','2'],
-  constraints:[
-    {coeffs:['1','3'],type:'<=',rhs:'200'},
-    {coeffs:['2','2'],type:'<=',rhs:'300'},
-    {coeffs:['0','1'],type:'<=',rhs:'60'}
-  ]
+// --- Test Runner ---
+let testsPassed = 0;
+let testsFailed = 0;
+const testResults = [];
+
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(`AserciÃ³n fallida: ${message}`);
+  }
+}
+
+function assertEq(actual, expected, message) {
+  if (actual !== expected) {
+    throw new Error(`${message}: esperado ${expected}, obtuvo ${actual}`);
+  }
+}
+
+function assertFracEq(frac, expectedStr, message) {
+  if (frac.toString() !== expectedStr) {
+    throw new Error(`${message}: esperado ${expectedStr}, obtuvo ${frac.toString()}`);
+  }
+}
+
+function runTest(name, fn) {
+  try {
+    fn();
+    testsPassed++;
+    testResults.push({ name, status: 'PASS' });
+    console.log(`  âœ… ${name}`);
+  } catch (e) {
+    testsFailed++;
+    testResults.push({ name, status: 'FAIL', error: e.message });
+    console.log(`  âŒ ${name}`);
+    console.log(`     ${e.message}`);
+  }
+}
+
+// ============================================================
+// TESTS
+// ============================================================
+
+console.log('\n====================================');
+console.log('  Suite de Pruebas â€” Solver PL');
+console.log('====================================\n');
+
+// --- Test 1: Ejemplo Word Light (Max estÃ¡ndar con <=) ---
+runTest('1. Word Light â€” Max estÃ¡ndar con <=', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['1', '2'],
+    constraints: [
+      { coeffs: ['1', '3'], type: '<=', rhs: '200' },
+      { coeffs: ['2', '2'], type: '<=', rhs: '300' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '60' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  assertFracEq(r.solution.z, '170', 'Z');
+  assertFracEq(r.solution.variables.X1, '90', 'X1');
+  assertFracEq(r.solution.variables.X2, '40', 'X2');
+  assertEq(r.metadata.useBigM, false, 'No debe usar Big-M');
+  assertEq(r.metadata.method, 'Simplex EstÃ¡ndar', 'MÃ©todo');
 });
-const r = s.solve();
-console.log('=== Example 1: Word Light ===');
-console.log('Status:', r.status);
-console.log('Z:', r.solution.z.toString(), 'X1:', r.solution.variables.X1.toString(), 'X2:', r.solution.variables.X2.toString());
-console.log('Iterations:', r.iterations.length);
-r.iterations.forEach(it => {
-  const row0 = it.tableau[0].map(v=>v.toString());
-  console.log('Iter'+it.iteration+': Row0=['+row0+'] BV=['+it.basicVars+'] opt='+it.isOptimal);
+
+// --- Test 2: Ejemplo ProducciÃ³n (Max estÃ¡ndar con <=) ---
+runTest('2. ProducciÃ³n â€” Max estÃ¡ndar con <=', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['60', '30'],
+    constraints: [
+      { coeffs: ['1', '0'], type: '<=', rhs: '5' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '4' },
+      { coeffs: ['6', '8'], type: '<=', rhs: '48' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  assertFracEq(r.solution.z, '360', 'Z');
+  assertFracEq(r.solution.variables.X1, '5', 'X1');
+  assertFracEq(r.solution.variables.X2, '2', 'X2');
 });
-console.log('\n=== Example 2 ===');
-const s2 = new SimplexSolver({
-  type:'max', numVars:2, objective:['60','30'],
-  constraints:[
-    {coeffs:['1','0'],type:'<=',rhs:'5'},
-    {coeffs:['0','1'],type:'<=',rhs:'4'},
-    {coeffs:['6','8'],type:'<=',rhs:'48'}
-  ]
+
+// --- Test 3: Big-M con restricciÃ³n >= ---
+runTest('3. Big-M â€” Con restricciÃ³n >=', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['5', '4'],
+    constraints: [
+      { coeffs: ['6', '4'], type: '<=', rhs: '24' },
+      { coeffs: ['1', '2'], type: '<=', rhs: '6' },
+      { coeffs: ['1', '1'], type: '>=', rhs: '2' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  assertEq(r.metadata.useBigM, true, 'Debe usar Big-M');
+  assertEq(r.metadata.method, 'Big-M', 'MÃ©todo');
+  // La soluciÃ³n debe ser factible: Z > 0
+  assert(r.solution.z.isPos(), 'Z debe ser positivo');
+  // Verificar que X1 + X2 >= 2 (restricciÃ³n >=)
+  const x1 = r.solution.variables.X1.toDecimal();
+  const x2 = r.solution.variables.X2.toDecimal();
+  assert(x1 + x2 >= 2 - 0.001, `X1+X2=${x1 + x2} debe ser >= 2`);
 });
-const r2 = s2.solve();
-console.log('Status:', r2.status);
-console.log('Z:', r2.solution.z.toString(), 'X1:', r2.solution.variables.X1.toString(), 'X2:', r2.solution.variables.X2.toString());
+
+// --- Test 4: Big-M con restricciÃ³n = y minimizaciÃ³n ---
+runTest('4. MinimizaciÃ³n con restricciones >= y =', () => {
+  const s = new SimplexSolver({
+    type: 'min', numVars: 2, objective: ['2', '3'],
+    constraints: [
+      { coeffs: ['1', '1'], type: '>=', rhs: '4' },
+      { coeffs: ['1', '3'], type: '>=', rhs: '6' },
+      { coeffs: ['1', '0'], type: '<=', rhs: '5' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  assertEq(r.metadata.useBigM, true, 'Debe usar Big-M');
+  // La soluciÃ³n debe ser factible
+  assert(r.solution.z !== null, 'Z no debe ser null');
+  const x1 = r.solution.variables.X1.toDecimal();
+  const x2 = r.solution.variables.X2.toDecimal();
+  // Verificar restricciones
+  assert(x1 + x2 >= 4 - 0.001, `R1: X1+X2=${x1 + x2} >= 4`);
+  assert(x1 + 3 * x2 >= 6 - 0.001, `R2: X1+3X2=${x1 + 3 * x2} >= 6`);
+  assert(x1 <= 5 + 0.001, `R3: X1=${x1} <= 5`);
+});
+
+// --- Test 5: RestricciÃ³n de igualdad ---
+runTest('5. Con restricciÃ³n de igualdad (=)', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['3', '5'],
+    constraints: [
+      { coeffs: ['1', '0'], type: '<=', rhs: '4' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '6' },
+      { coeffs: ['1', '1'], type: '=', rhs: '8' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  assertEq(r.metadata.useBigM, true, 'Debe usar Big-M con =');
+  const x1 = r.solution.variables.X1.toDecimal();
+  const x2 = r.solution.variables.X2.toDecimal();
+  // Verificar igualdad
+  assert(Math.abs(x1 + x2 - 8) < 0.001, `X1+X2=${x1 + x2} debe ser = 8`);
+});
+
+// --- Test 6: Problema Infactible ---
+runTest('6. Problema Infactible', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['1', '1'],
+    constraints: [
+      { coeffs: ['1', '1'], type: '<=', rhs: '4' },
+      { coeffs: ['1', '1'], type: '>=', rhs: '6' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'infeasible', 'Status debe ser infeasible');
+});
+
+// --- Test 7: Problema No Acotado ---
+runTest('7. Problema No Acotado', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['2', '1'],
+    constraints: [
+      { coeffs: ['1', '-1'], type: '<=', rhs: '10' },
+      { coeffs: ['-1', '1'], type: '<=', rhs: '10' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'unbounded', 'Status debe ser unbounded');
+});
+
+// --- Test 8: MÃºltiples Ã“ptimos ---
+runTest('8. MÃºltiples Ã“ptimos', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['2', '4'],
+    constraints: [
+      { coeffs: ['1', '2'], type: '<=', rhs: '10' },
+      { coeffs: ['1', '1'], type: '<=', rhs: '8' },
+      { coeffs: ['1', '0'], type: '<=', rhs: '6' }
+    ]
+  });
+  const r = s.solve();
+  // La funciÃ³n objetivo es paralela a una restricciÃ³n => mÃºltiples Ã³ptimos
+  assertEq(r.status, 'multiple', 'Status debe ser multiple');
+  assertFracEq(r.solution.z, '20', 'Z Ã³ptimo');
+});
+
+// --- Test 9: MinimizaciÃ³n estÃ¡ndar ---
+runTest('9. MinimizaciÃ³n estÃ¡ndar con <=', () => {
+  const s = new SimplexSolver({
+    type: 'min', numVars: 2, objective: ['6', '4'],
+    constraints: [
+      { coeffs: ['1', '0'], type: '<=', rhs: '5' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '4' },
+      { coeffs: ['1', '1'], type: '<=', rhs: '7' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  // Min Z ocurre en el origen: Z = 0
+  assertFracEq(r.solution.z, '0', 'Z mÃ­nimo');
+  assertFracEq(r.solution.variables.X1, '0', 'X1');
+  assertFracEq(r.solution.variables.X2, '0', 'X2');
+});
+
+// --- Test 10: DegeneraciÃ³n ---
+runTest('10. DetecciÃ³n de DegeneraciÃ³n', () => {
+  // Problema con degeneraciÃ³n: 3 restricciones se cruzan en un punto
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['3', '5'],
+    constraints: [
+      { coeffs: ['1', '1'], type: '<=', rhs: '4' },
+      { coeffs: ['1', '0'], type: '<=', rhs: '2' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '2' }
+    ]
+  });
+  const r = s.solve();
+  assertEq(r.status, 'optimal', 'Status');
+  assertFracEq(r.solution.z, '16', 'Z');
+  assertFracEq(r.solution.variables.X1, '2', 'X1');
+  assertFracEq(r.solution.variables.X2, '2', 'X2');
+  // Este problema es degenerado (3 restricciones activas, 2 variables)
+  assertEq(r.metadata.isDegenerado, true, 'Debe detectar degeneraciÃ³n');
+});
+
+// --- Test 11: Metadata correcta ---
+runTest('11. Metadata del resultado', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['1', '2'],
+    constraints: [
+      { coeffs: ['1', '3'], type: '<=', rhs: '200' },
+      { coeffs: ['2', '2'], type: '<=', rhs: '300' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '60' }
+    ]
+  });
+  const r = s.solve();
+  assert(r.metadata !== undefined, 'Metadata debe existir');
+  assertEq(typeof r.metadata.useBigM, 'boolean', 'useBigM tipo');
+  assertEq(typeof r.metadata.isDegenerado, 'boolean', 'isDegenerado tipo');
+  assertEq(typeof r.metadata.numIterations, 'number', 'numIterations tipo');
+  assertEq(typeof r.metadata.method, 'string', 'method tipo');
+  assert(r.metadata.numIterations > 0, 'Debe tener >= 1 iteraciÃ³n');
+});
+
+// --- Test 12: Iteraciones tienen isDegenerado ---
+runTest('12. isDegenerado en iteraciones', () => {
+  const s = new SimplexSolver({
+    type: 'max', numVars: 2, objective: ['1', '1'],
+    constraints: [
+      { coeffs: ['1', '0'], type: '<=', rhs: '5' },
+      { coeffs: ['0', '1'], type: '<=', rhs: '5' }
+    ]
+  });
+  const r = s.solve();
+  r.iterations.forEach((it, idx) => {
+    assert(typeof it.isDegenerado === 'boolean',
+      `IteraciÃ³n ${idx} debe tener isDegenerado (booleano)`);
+  });
+});
+
+// ============================================================
+// RESUMEN
+// ============================================================
+console.log('\n====================================');
+console.log(`  Resultados: ${testsPassed} pasaron, ${testsFailed} fallaron`);
+console.log('====================================\n');
+
+if (testsFailed > 0) {
+  console.log('Tests fallidos:');
+  testResults.filter(t => t.status === 'FAIL').forEach(t => {
+    console.log(`  - ${t.name}: ${t.error}`);
+  });
+  console.log('');
+}
+
+// Exit code para CI
+if (typeof process !== 'undefined') {
+  process.exit(testsFailed > 0 ? 1 : 0);
+}

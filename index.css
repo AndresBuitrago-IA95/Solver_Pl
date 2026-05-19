@@ -741,3 +741,125 @@ select.constraint-type { width: 65px; font-size: 1.1rem; text-align: center; }
   color: var(--accent-1);
   margin: 1rem 0;
 }
+
+/* --- Method Badges --- */
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.method-badge.bigm {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.method-badge.standard {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.method-badge.degenerate {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* --- Degeneracy indicator in tableau --- */
+.simplex-table tr.degenerate-row td {
+  position: relative;
+}
+
+.simplex-table tr.degenerate-row td:last-child::after {
+  content: '⚠ Deg';
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  font-size: 0.65rem;
+  color: #f59e0b;
+  opacity: 0.7;
+}
+
+/* --- Sensitivity: Range column --- */
+.sensitivity-table td.range-cell {
+  font-size: 0.8rem;
+  color: var(--accent-3);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sensitivity-table td.range-cell .range-bracket {
+  color: var(--text-muted);
+}
+
+/* --- Sensitivity: Interpretation cards --- */
+.sensitivity-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: rgba(10, 10, 25, 0.4);
+  border-radius: var(--radius-xs);
+  border-left: 3px solid var(--accent-1);
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.sensitivity-insight .insight-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sensitivity-insight.active {
+  border-left-color: var(--success);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.sensitivity-insight.inactive {
+  border-left-color: var(--text-muted);
+  background: rgba(10, 10, 25, 0.3);
+}
+
+/* --- Solution metadata row --- */
+.solution-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.solution-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  background: rgba(10, 10, 25, 0.4);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-color);
+}
+
+.solution-meta-item .meta-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.solution-meta-item .meta-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-3);
+}
+

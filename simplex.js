@@ -100,7 +100,7 @@ class SimplexSolver {
     this.iterations = [];
     this.status = null;       // 'optimal','unbounded','infeasible','multiple'
     this.solution = null;
-    this.M = new Fraction(10000);
+    this.M = new Fraction(100000);
     this.useBigM = false;
   }
 
@@ -155,7 +155,17 @@ class SimplexSolver {
     }
 
     this._extractSolution();
-    return { status: this.status, solution: this.solution, iterations: this.iterations };
+    return {
+      status: this.status,
+      solution: this.solution,
+      iterations: this.iterations,
+      metadata: {
+        useBigM: this.useBigM,
+        isDegenerado: this._checkDegeneracy(),
+        numIterations: this.iterations.length,
+        method: this.useBigM ? 'Big-M' : 'Simplex Estándar'
+      }
+    };
   }
 
   _buildAugmented() {
@@ -279,19 +289,20 @@ class SimplexSolver {
   }
 
   _findPivotCol() {
-    // Columna con coeficiente más negativo en fila 0
-    let minVal = new Fraction(0);
-    let minCol = -1;
+    // Regla de Bland: seleccionar la PRIMERA variable (menor índice)
+    // con coeficiente negativo en fila 0, para evitar ciclado
     for (let j = 1; j <= this.totalVars; j++) {
-      if (this.tableau[0][j].lt(minVal)) {
-        minVal = this.tableau[0][j];
-        minCol = j;
+      if (this.tableau[0][j].isNeg()) {
+        return j;
       }
     }
-    return minCol;
+    return -1;
   }
 
   _findPivotRow(pivotCol) {
+    // Prueba de razón mínima con regla de Bland:
+    // En caso de empate, se selecciona la fila con menor índice
+    // (el uso de '<' estricto ya garantiza esto al recorrer en orden ascendente)
     const m = this.basicVars.length;
     let minRatio = null;
     let minRow = -1;
@@ -384,7 +395,7 @@ class SimplexSolver {
       varNames: [...this.varNames],
       basicVars: [...this.basicVars],
       tableau: this.tableau.map(row => row.map(v => v.clone())),
-      // For display: show the NEXT pivot info (what will happen next)
+      // Para visualización: muestra la info del SIGUIENTE pivote
       pivotCol: nextPivotCol,
       pivotRow: nextPivotRow,
       pivotElement: (nextPivotRow !== null && nextPivotCol !== null && nextPivotRow !== -1)
@@ -392,11 +403,13 @@ class SimplexSolver {
       enteringVar: nextEntering,
       leavingVar: nextLeaving,
       ratios: nextRatios,
-      // Operations that WERE done to get to this tableau (from previous iteration)
+      // Operaciones realizadas para llegar a este tablero (iteración anterior)
       operations: pivotInfo ? pivotInfo.operations : null,
       prevEntering: pivotInfo ? pivotInfo.enteringVar : null,
       prevLeaving: pivotInfo ? pivotInfo.leavingVar : null,
-      isOptimal: optimal
+      isOptimal: optimal,
+      // Detección de degeneración: alguna variable básica tiene RHS = 0
+      isDegenerado: this._checkDegeneracy()
     };
 
     this.iterations.push(snapshot);
@@ -408,6 +421,15 @@ class SimplexSolver {
         const rowIdx = this.basicVars.indexOf(bv) + 1;
         if (!this.tableau[rowIdx][this.rhsCol].isZero()) return true;
       }
+    }
+    return false;
+  }
+
+  // Detección de degeneración: retorna true si alguna variable básica tiene RHS = 0
+  _checkDegeneracy() {
+    const m = this.basicVars.length;
+    for (let i = 0; i < m; i++) {
+      if (this.tableau[i + 1][this.rhsCol].isZero()) return true;
     }
     return false;
   }
