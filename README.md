@@ -12,7 +12,7 @@ A continuación se detalla el progreso del proyecto dividido en 3 Sprints:
 - **Lógica Simplex Base**: Implementación inicial del algoritmo Simplex para la resolución de modelos de programación lineal (`simplex.js`).
 - Captura de la función objetivo y configuración de restricciones (<=, >=, =).
 
-###  ✅ Sprint 2 - Realizado
+### ⏳ Sprint 2 - Pendiente
 - **Análisis de Sensibilidad**: Implementación detallada de la lógica para el cálculo y visualización del análisis de sensibilidad (`sensitivity.js`).
 - **Mejoras en el Algoritmo Simplex**: Soporte robusto para casos especiales (dos fases, penalización, degeneración).
 - **Pruebas y validación**: Ejecución de casos de prueba integrales para asegurar la precisión matemática (`test.js`, `_test_combined.js`).
