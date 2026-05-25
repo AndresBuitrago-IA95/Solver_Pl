@@ -3,8 +3,8 @@
 // ============================================================
 
 const GRAPH_COLORS = [
-  '#6366f1', '#f59e0b', '#22c55e', '#ef4444', '#3b82f6',
-  '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#06b6d4'
+  '#f9a12c', '#137598', '#ef434d', '#70205b', '#532D87',
+  '#069a7e', '#8dc63f', '#43b649', '#35944b', '#0e7774'
 ];
 
 function renderGraph(config, result) {
@@ -55,11 +55,11 @@ function renderGraph(config, result) {
   function toCanvasY(y) { return H - pad - (y / maxX2) * (H - 2 * pad); }
 
   // Background
-  ctx.fillStyle = '#0a0a1f';
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
 
   // Grid
-  ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)';
+  ctx.strokeStyle = 'rgba(67, 182, 73, 0.08)';
   ctx.lineWidth = 1;
   const gridStepX = maxX1 <= 20 ? 1 : maxX1 <= 100 ? 10 : 50;
   const gridStepY = maxX2 <= 20 ? 1 : maxX2 <= 100 ? 10 : 50;
@@ -71,13 +71,13 @@ function renderGraph(config, result) {
   }
 
   // Axes
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.strokeStyle = '#1a2e23';
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(pad, pad); ctx.stroke();
 
   // Axis labels
-  ctx.fillStyle = '#9495b7';
+  ctx.fillStyle = '#1a2e23';
   ctx.font = '14px Inter, sans-serif';
   ctx.textAlign = 'center';
   for (let x = 0; x <= maxX1; x += gridStepX) {
@@ -89,7 +89,7 @@ function renderGraph(config, result) {
     if (y === 0) continue;
     ctx.fillText(y, pad - 10, toCanvasY(y) + 4);
   }
-  ctx.fillStyle = '#a78bfa';
+  ctx.fillStyle = '#026937';
   ctx.font = 'bold 16px Inter, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('X₁', W / 2, H - 15);
@@ -115,8 +115,8 @@ function renderGraph(config, result) {
 
   // Draw feasible region
   if (region.length >= 3) {
-    ctx.fillStyle = 'rgba(99, 102, 241, 0.12)';
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
+    ctx.fillStyle = 'rgba(67, 182, 73, 0.15)';
+    ctx.strokeStyle = 'rgba(67, 182, 73, 0.4)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(toCanvasX(region[0][0]), toCanvasY(region[0][1]));
@@ -151,12 +151,12 @@ function renderGraph(config, result) {
   // Draw feasible vertices
   const vertices = region.filter(p => p[0] >= -0.001 && p[1] >= -0.001 && p[0] <= maxX1 * 1.5 && p[1] <= maxX2 * 1.5);
   vertices.forEach(v => {
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillStyle = '#1a2e23';
     ctx.beginPath();
     ctx.arc(toCanvasX(v[0]), toCanvasY(v[1]), 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillStyle = '#4a6656';
     ctx.font = '11px JetBrains Mono, monospace';
     ctx.textAlign = 'left';
     const label = `(${round2(v[0])}, ${round2(v[1])})`;
@@ -166,7 +166,7 @@ function renderGraph(config, result) {
   // Draw objective function iso-profit line at optimal
   if (result.solution && result.solution.z) {
     const zOpt = result.solution.z.toDecimal();
-    ctx.strokeStyle = '#fbbf24';
+    ctx.strokeStyle = '#8dc63f';
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 4]);
     const objPts = getLinePoints(c1, c2, zOpt, maxX1, maxX2);
@@ -177,21 +177,21 @@ function renderGraph(config, result) {
       ctx.stroke();
     }
     ctx.setLineDash([]);
-    legendHtml.push(`<div class="legend-item"><div class="legend-color" style="background:#fbbf24;"></div>Z = ${zOpt} (óptimo)</div>`);
+    legendHtml.push(`<div class="legend-item"><div class="legend-color" style="background:#8dc63f;"></div>Z = ${zOpt} (óptimo)</div>`);
 
     // Draw optimal point
     const x1Opt = result.solution.variables.X1.toDecimal();
     const x2Opt = result.solution.variables.X2.toDecimal();
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = '#8dc63f';
     ctx.beginPath();
     ctx.arc(toCanvasX(x1Opt), toCanvasY(x2Opt), 8, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0a0a1f';
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 10px Inter';
     ctx.textAlign = 'center';
     ctx.fillText('★', toCanvasX(x1Opt), toCanvasY(x2Opt) + 4);
 
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = '#026937';
     ctx.font = 'bold 13px JetBrains Mono, monospace';
     ctx.textAlign = 'left';
     ctx.fillText(`Óptimo (${round2(x1Opt)}, ${round2(x2Opt)})`, toCanvasX(x1Opt) + 14, toCanvasY(x2Opt) - 4);

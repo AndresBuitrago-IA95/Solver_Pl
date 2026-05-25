@@ -101,10 +101,10 @@ function solveProblem() {
     const result = solver.solve();
     currentResult = result;
     renderSolution(config, result);
-    switchTab('solution');
     if (config.numVars === 2 && result.status !== 'unbounded' && result.status !== 'infeasible') {
       if (typeof renderGraph === 'function') renderGraph(config, result);
     }
+    switchTab(config.numVars === 2 ? 'graph' : 'solution');
     if ((result.status === 'optimal' || result.status === 'multiple') && typeof renderSensitivity === 'function') {
       renderSensitivity(config, result);
     }
